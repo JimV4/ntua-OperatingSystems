@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include "proc-common.h"
+
+#define SLEEP_PROC_SEC  10
+#define SLEEP_TREE_SEC  3
+
+/*
+ * Create this process tree:
+ * A-+-B---D
+ *   `-C
+ */
+void fork_procs(void)
+{
+        /*
+         * initial process is A.
+         */
+        int status;
+        change_pname("A");
+        printf("A: Initialising...\n");
+        /*Create child B of A*/
+        pid_t pid1 = fork();
+        if (pid1 < 0) 
+        {
+                perror("B fork failed...\n");
+                exit(16);
+        }
+        /*Proccess B doing...*/
+        if (pid1 == 0) {
+                change_pname("B");
+                printf ("B: Initiating...\n");
+
+                /*Create child D of B*/
+                pid1 = fork();
+                if (pid1 < 0) {
+                        perror("D fork failed...\n");
+                        exit(13);
+                }
+                /*Process D doing...*/
+                if (pid1 == 0) {
+                        change_pname("D");
+                        printf("D: Initialising...\n");
+                        printf("D: Sleeping...\n");
+                        sleep(SLEEP_PROC_SEC);
+if (pid1 == 0) {
+                        change_pname("D");
+                        printf("D: Initialising...\n");
+                        printf("D: Sleeping...\n");
+                        sleep(SLEEP_PROC_SEC);
+                        printf("D: Exiting...\n");
+                        exit(13);
+                }
+
+                /*Process B doing after D is created...*/
+                printf("Waiting for D to terminate...\n");
+                sleep(SLEEP_TREE_SEC);
+                pid1 = wait(&status);
+                explain_wait_status(pid1, status);
+                printf("B: Exiting...\n");
+                exit(19);
+        }
+
+
+        /*Create child C of A*/
+        pid_t pid2 = fork();
+        if (pid2 < 0) 
+        {
+                perror("C fork failed...\n");
+                exit(17);
+        }
+        /*Proccess C doing...*/
+        if (pid2 == 0) {
+                change_pname("C");
